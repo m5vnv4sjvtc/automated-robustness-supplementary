@@ -23,7 +23,7 @@ sessions.
 ```
 
 We use some inductive datatypes to ascribe information to each event such
-as the location accessed, value read and access type -
+as the location accessed, value accessed and access type -
 
 ```
 (declare-datatypes () ((EventType R W U F)))              ; Type of access
@@ -66,8 +66,7 @@ for all locations -
 ```
 
 We also have additional constraints for each relation consistent with our implementation such as
-reads-from should relate a read to a write, session order should exist between all events in a particular session
-and so on.
+reads-from should relate a read and a write or that session order should exist between all events in a particular session.
 
 Given this SMT encoding, a satisfiable model for this instance of formulas represents a possible program execution.
 For example, a simple example would be represented as - #TODO insert graph
