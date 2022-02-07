@@ -1,4 +1,4 @@
-# Automated Robustness Verification of Concurrent Data Structures in C11
+# Automated Robustness Verification
 We present some additional information in this file to explain concepts in the paper in further detail.
 
 ## Encoding library constraints using SMT
