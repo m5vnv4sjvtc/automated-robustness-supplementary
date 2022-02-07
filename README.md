@@ -82,10 +82,6 @@ events (which we will discuss in the following sections) -
 (assert (=> (hbSC e1 e2) (not hb e1 e2)))
 ```
 
-## Verification strategy for checking robustness
-
-## Tool workflow for verifying libaries
-
 ## Detailed explanation of Treiber stack
 We first present the code for a Treiber stack implementation that we have
 considered for verification. This library implementation has two methods
@@ -98,7 +94,7 @@ void push(int v) {
   while(true) {
     node* t = atomic_load_explicit(top, memory_order_relaxed);
     atomic_store_explicit(&(n->next), t, memory_order_relaxed);
-    if (atomic_compare_exchange_strong_explicit(top, t, n, memory_order_acqrel))
+    if (atomic_compare_exchange_strong_explicit(top, t, n, memory_order_acqrel)) // LP, push
       break;
   }
 }
@@ -107,17 +103,56 @@ int pop() {
   while(true) {
     node* t = atomic_load_explicit(top, memory_order_acquire);
     if (t == NULL) {
-      return EMPTY;
+      return EMPTY; // LP, pop
     }
     int v = atomic_load_explicit(&(t->val), memory_order_relaxed);
     node* n = atomic_load_explicit(&(t->next), memory_order_relaxed);
-    if(atomic_compare_exchange_string_explicit(top, t, n, memory_order_acqrel))
-      break;
+    if(atomic_compare_exchange_string_explicit(top, t, n, memory_order_acqrel)) // LP, pop
+      return v;
   }
 }
 ```
 
-Given that the CAS operations can ar`
+The comments of the form `LP, push` and `LP, pop` denote that these points are
+linearization points corresponding to a certain method. Given that these
+linearization points can be non-local to a given method, the method annotation
+allows us to track the method to which the linearization point belongs. The
+programmer also provides a specification file of the form - #TODO
+
+Given that the CAS operations can arbitrarily fail, these methods would
+generate an infinite number of events. But a robustness-preserving
+transformation allows us to reason about the behavior of these methods using a
+finite number of events. The transformed program is as follows -
+
+```
+void push(int v) {
+  node* n = malloc(sizeof(node));
+  atomic_store_explicit(&(n->val), v , memory_order_relaxed);
+  node* t = atomic_load_explicit(top, memory_order_relaxed);
+  atomic_store_explicit(&(n->next), t, memory_order_relaxed);
+  bcas_explicit(top, t, n, memory_order_acqrel);
+}
+
+int pop() {
+  node* t = atomic_load_explicit(top, memory_order_acquire);
+  if (t == NULL) {
+    return EMPTY;
+  }
+  int v = atomic_load_explicit(&(t->val), memory_order_relaxed);
+  node* n = atomic_load_explicit(&(t->next), memory_order_relaxed);
+  bcas_explicit(top, t, n, memory_order_acqrel);
+  return v;
+}
+```
+
+Notice that we have replaced the CASs with blocking CAS operations which we
+denote as `bcas_explicit` in the code. This removes the while loop, as the
+`bcas` operation means that the CAS blocks until it succeeds, thus removing
+the need for a retry loop. This relies on the assumption that the failing
+CAS events do not have any visible effects, thus can be ignored.
+
+Once this transformation is done, our code generates the events for each
+
 
 Given that there are 3 location classes in the Treiber Stack namely - `Top`,
 `Next` and `Val`, we have the following set of cases that we need to verify.
