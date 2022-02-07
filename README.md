@@ -87,6 +87,35 @@ events (which we will discuss in the following sections) -
 ## Tool workflow for verifying libaries
 
 ## Detailed explanation of Treiber stack
+We first present the code for a Treiber stack implementation that we have
+considered for verification. This library implementation has two methods
+as follows -
+
+```c
+void push(int v) {
+  node* n = malloc(sizeof(node)); 
+  atomic_store_explicit(&(n->val), v , memory_order_relaxed);
+  while(true) {
+    node* t = atomic_load_explicit(top, memory_order_relaxed);
+    atomic_store_explicit(&(n->next), t, memory_order_relaxed);
+    if (atomic_compare_exchange_strong_explicit(top, t, n, memory_order_acqrel))
+      break;
+  }
+}
+
+int pop() {
+  while(true) {
+    node* t = atomic_load_explicit(top, memory_order_acquire);
+    if (t == NULL) {
+      return EMPTY;
+    }
+    int v = atomic_load_explicit(&(t->val), memory_order_relaxed);
+    node* n = atomic_load_explicit(&(t->next), memory_order_relaxed);
+    if(atomic_compare_exchange_string_explicit(top, t, n, memory_order_acqrel))
+      break;
+  }
+}
+```
 
 Given that there are 3 location classes in the Treiber Stack namely - `Top`,
 `Next` and `Val`, we have the following set of cases that we need to verify.
