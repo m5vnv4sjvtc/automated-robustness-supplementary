@@ -102,9 +102,8 @@ void push(int v) {
 int pop() {
   while(true) {
     node* t = atomic_load_explicit(top, memory_order_acquire);
-    if (t == NULL) {
+    if (t == NULL)
       return EMPTY; // LP, pop
-    }
     int v = atomic_load_explicit(&(t->val), memory_order_relaxed);
     node* n = atomic_load_explicit(&(t->next), memory_order_relaxed);
     if(atomic_compare_exchange_string_explicit(top, t, n, memory_order_acqrel)) // LP, pop
@@ -119,9 +118,10 @@ linearization points can be non-local to a given method, the method annotation
 allows us to track the method to which the linearization point belongs.
 
 Given that the CAS operations can arbitrarily fail, these methods would
-generate an infinite number of events. But a robustness-preserving
-transformation allows us to reason about the behavior of these methods using a
-finite number of events. The transformed program is as follows -
+generate an infinite number of events. Our tool first performs a
+robustness-preserving transformation allows us to reason about the behavior of
+these methods using a finite number of events. The transformed program is as
+follows -
 
 ```
 void push(int v) {
@@ -134,9 +134,8 @@ void push(int v) {
 
 int pop() {
   node* t = atomic_load_explicit(top, memory_order_acquire);
-  if (t == NULL) {
+  if (t == NULL)
     return EMPTY;
-  }
   int v = atomic_load_explicit(&(t->val), memory_order_relaxed);
   node* n = atomic_load_explicit(&(t->next), memory_order_relaxed);
   bcas_explicit(top, t, n, memory_order_acqrel);
@@ -150,8 +149,22 @@ denote as `bcas_explicit` in the code. This removes the while loop, as the
 the need for a retry loop. This relies on the assumption that the failing
 CAS events do not have any visible effects, thus can be ignored.
 
-Once this transformation is done, our code generates the events for each
+After this transformation, we perform a syntactical analysis to gather the
+locations accessed by a library implementation. This analysis will
+parse the library code and traverse the AST, returning the set of locations
+accssed. In this case, it will return - 
 
+* `top`
+* `n->next`
+* `n->val`
+
+Further, the access constraint pre-processing step will generate the constraint
+that there is always a unique write to `val` thus, a read to `val` will always
+return the initialization value. Once this is done, the events corresponding
+to each memory operation are generated -
+
+```smt
+```
 
 Given that there are 3 location classes in the Treiber Stack namely - `Top`,
 `Next` and `Val`, we have the following set of cases that we need to verify.
