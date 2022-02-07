@@ -40,7 +40,8 @@ memory order of each event are as follows -
 (declare-fun elabel (E) EventLabel) ; Mapping every event to its memory order
 ```
 
-Finally, we use binary predicates to encode the relations which denote an exeuction graph -
+Finally, we use binary predicates to encode the relations which denote an
+exeuction graph -
 
 ```smt2
 (declare-fun so   (E E) Bool) ; session order
@@ -52,8 +53,8 @@ Finally, we use binary predicates to encode the relations which denote an exeuct
 (declare-fun hbSC (E E) Bool) ; happens before (sequential consistency)
 ```
 
-For each relation, we also declare the constaints. For example, the `mo` relation should be a total order
-for all locations -
+For each relation, we also declare the constraints necessary. For example, the
+`mo` relation should be a total order for all locations -
 
 ```smt2
 (assert (forall ((e1 E) (e2 E)) ; for all events e1, e2
@@ -65,14 +66,17 @@ for all locations -
       (mo e1 e3))))                    ; (mo e1 e3)
 ```
 
-We also have additional constraints for each relation consistent with our implementation such as
-reads-from should relate a read and a write or that session order should exist between all events in a particular session.
+We also have additional constraints for each relation consistent with our
+implementation such as reads-from should relate a read and a write or that
+session order should exist between all events in a particular session.
 
-Given this SMT encoding, a satisfiable model for this instance of formulas represents a possible program execution.
-For example, a simple example would be represented as - #TODO insert graph
+Given this SMT encoding, a satisfiable model for this instance of formulas
+represents a possible program execution. For example, a simple example would be
+represented as - #TODO insert graph
 
-With this encoding, it becomes possible to pose the following robustness query for a given exeuction graph, where
-`e1` and `e2` are instantiated to specific events (which we will discuss in the following sections) - 
+With this encoding, it becomes possible to pose the following robustness query
+for a given exeuction graph, where `e1` and `e2` are instantiated to specific
+events (which we will discuss in the following sections) - 
 
 ```smt2
 (assert (=> (hbSC e1 e2) (not hb e1 e2)))
@@ -84,8 +88,8 @@ With this encoding, it becomes possible to pose the following robustness query f
 
 ## Detailed explanation of Treiber stack
 
-Given that there are 3 location classes in the Treiber Stack namely - `Top`, `Next` and `Val`, we have the following
-set of cases that we need to verify.
+Given that there are 3 location classes in the Treiber Stack namely - `Top`,
+`Next` and `Val`, we have the following set of cases that we need to verify.
 
 | Case | L   | L'  |
 |------|-----|-----|
