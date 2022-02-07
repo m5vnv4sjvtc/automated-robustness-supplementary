@@ -15,7 +15,7 @@ sessions. Constants of sort `E` are used to represent events. Other
 constants are used to denote constraints on values, invocations and
 sessions.
 
-```smt
+```smt2
 (declare-sort E) ; Sort for events
 (declare-sort I) ; Sort for invocations
 (declare-sort V) ; Sort for values
@@ -35,14 +35,14 @@ We then define uninterpreted functions which are used to ascribe information
 to each event. Some examples of such functions, which denote the type and
 memory order of each event are as follows -
 
-```smt
+```smt2
 (declare-fun etype  (E) EventType)  ; Mapping every event to its access type
 (declare-fun elabel (E) EventLabel) ; Mapping every event to its memory order
 ```
 
 Finally, we use binary predicates to encode the relations which denote an exeuction graph -
 
-```smt
+```smt2
 (declare-fun so   (E E) Bool) ; session order
 (declare-fun rf   (E E) Bool) ; reads from 
 (declare-fun mo   (E E) Bool) ; memory order
@@ -55,7 +55,7 @@ Finally, we use binary predicates to encode the relations which denote an exeuct
 For each relation, we also declare the constaints. For example, the `mo` relation should be a total order
 for all locations -
 
-```smt
+```smt2
 (assert (forall ((e1 E) (e2 E)) ; for all events e1, e2
   (=> (mo e1 e2)                ; mo e1 e2 implies 
       (not (mo e2 e1))))        ; not (mo e2 e1)
@@ -75,7 +75,7 @@ For example, a simple example would be represented as - #TODO insert graph
 With this encoding, it becomes possible to pose the following robustness query for a given exeuction graph, where
 `e1` and `e2` are instantiated to specific events (which we will discuss in the following sections) - 
 
-```smt
+```smt2
 (assert (=> (hbSC e1 e2) (not hb e1 e2)))
 ```
 
