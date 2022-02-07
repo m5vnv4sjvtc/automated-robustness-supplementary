@@ -91,7 +91,7 @@ We first present the code for a Treiber stack implementation that we have
 considered for verification. This library implementation has two methods
 as follows -
 
-```c
+```c {.line-numbers}
 void push(int v) {
   node* n = malloc(sizeof(node)); 
   atomic_store_explicit(&(n->val), v , memory_order_relaxed);
@@ -116,6 +116,8 @@ int pop() {
   }
 }
 ```
+
+Given that the CAS operations can ar`
 
 Given that there are 3 location classes in the Treiber Stack namely - `Top`,
 `Next` and `Val`, we have the following set of cases that we need to verify.
