@@ -87,7 +87,7 @@ We first present the code for a Treiber stack implementation that we have
 considered for verification. This library implementation has two methods
 as follows -
 
-```c {.line-numbers}
+```c
 void push(int v) {
   node* n = malloc(sizeof(node)); 
   atomic_store_explicit(&(n->val), v , memory_order_relaxed);
@@ -123,7 +123,7 @@ robustness-preserving transformation allows us to reason about the behavior of
 these methods using a finite number of events. The transformed program is as
 follows -
 
-```
+```c
 void push(int v) {
   node* n = malloc(sizeof(node));
   atomic_store_explicit(&(n->val), v , memory_order_relaxed);
