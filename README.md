@@ -1,5 +1,6 @@
 # Automated Robustness Verification
-We present some additional information in this file to explain concepts in the paper in further detail.
+We present some additional information in this file to explain concepts in the
+paper in further detail.
 
 ## Encoding library constraints using SMT
 
