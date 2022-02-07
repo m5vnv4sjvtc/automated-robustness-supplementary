@@ -116,8 +116,7 @@ int pop() {
 The comments of the form `LP, push` and `LP, pop` denote that these points are
 linearization points corresponding to a certain method. Given that these
 linearization points can be non-local to a given method, the method annotation
-allows us to track the method to which the linearization point belongs. The
-programmer also provides a specification file of the form - #TODO
+allows us to track the method to which the linearization point belongs.
 
 Given that the CAS operations can arbitrarily fail, these methods would
 generate an infinite number of events. But a robustness-preserving
