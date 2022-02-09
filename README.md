@@ -28,7 +28,7 @@ as the location accessed, value accessed and access type -
 ```
 (declare-datatypes () ((EventType R W U F)))              ; Type of access
 (declare-datatypes () ((EventLabel Rlx Rel Acq AcqRel)))  ; Access memory order
-(declare-datatypes () ((Field Val Next)))                 ; Access location 
+(declare-datatypes () ((Field Default Val Next)))         ; Access location 
 ```
 
 We then define uninterpreted functions which are used to ascribe information
@@ -70,6 +70,11 @@ We also have additional constraints for each relation consistent with our
 implementation such as reads-from should relate a read and a write or that
 session order should exist between all events in a particular session.
 
+After this, we introduce the encoding of invocations. An invocation represents
+a single call to a library method by a client in a particular session with 
+some arguments and a return value. Each event is mapped to a certain event
+and we introduce additional relations to constrain the return values and
+
 Given this SMT encoding, a satisfiable model for this instance of formulas
 represents a possible program execution. For example, a simple example would be
 represented as - #TODO insert graph
@@ -81,6 +86,8 @@ events (which we will discuss in the following sections) -
 ```smt2
 (assert (=> (hbSC e1 e2) (not hb e1 e2)))
 ```
+
+Invocation relation, invocation mapping, linearizability
 
 ## Detailed explanation of Treiber stack
 We first present the code for a Treiber stack implementation that we have
@@ -161,9 +168,45 @@ accssed. In this case, it will return -
 Further, the access constraint pre-processing step will generate the constraint
 that there is always a unique write to `val` thus, a read to `val` will always
 return the initialization value. Once this is done, the events corresponding
-to each memory operation are generated -
+to each memory operation are generated. First we show the memory events
+generated for the push method -
 
 ```smt
+(assert (forall ((i I)) (=> (= (itype i) Enq) (and (= (etype (E1e i)) W) (= (elabel (E1e i)) Rlx)  (= (loc (E1e i)) (newloc i)) (= (stype (E1e i)) E1t) (= (field (E1e i)) Val) (= (wval (E1e i)) (argval i)) (= (valevent i) (E1e i))  ) ) ))
+
+(assert (forall ((i I)) (=> (= (itype i) Enq) (soE (E1e i) (E2e i)) ) ))
+(assert (forall ((i I)) (=> (= (itype i) Enq) (and (= (etype (E2e i)) R) (= (elabel (E2e i)) Rlx)  (= (loc (E2e i)) head) (= (stype (E2e i)) E2t) (= (field (E2e i)) Default) (= (rval (E2e i)) (enqh i)) ) ) ))
+
+
+(assert (forall ((i I)) (=> (= (itype i) Enq) (soE (E2e i) (E3e i)) ) ))
+(assert (forall ((i I)) (=> (= (itype i) Enq) (and (= (etype (E3e i)) W) (= (elabel (E3e i)) Rlx)  (= (loc (E3e i)) (newloc i)) (= (stype (E3e i)) E3t) (= (field (E3e i)) Next) (= (wval (E3e i)) (enqh i)) ) ) ))
+
+
+(assert (forall ((i I)) (=> (= (itype i) Enq) (soE (E3e i) (E4e i)) ) ))
+(assert (forall ((i I)) (=> (= (itype i) Enq) (and (= (etype (E4e i)) U) (= (elabel (E4e i)) AcqRel)  (= (loc (E4e i)) head) (= (stype (E4e i)) E4t) (= (field (E4e i)) Default) (= (rval (E4e i)) (enqh i)) (= (wval (E4e i)) (newloc i) ) ) ) ))
+```
+
+Then we show the memory events corresponding to the pop method -
+
+```smt
+(assert (forall ((i I))
+  (=> (= (itype i) Deq)
+  (and
+    (= (rval (D1e i)) (deqh i))
+    (= (loc (D1e i)) top)
+    (= (field (D1e i)) Default)
+    (= (etype (D1e i)) R)
+    (= (elabel (D1e i)) Acq)))))
+
+(assert (forall ((i I)) (=> (and (= (itype i) Deq) (= (deqh i) NULL)) (and (= (retval i) EMPTY) (isBot (D2e i)) (isBot (D3e i)) (isBot (D4e i)) ) ) ))
+
+(assert (forall ((i I)) (=> (and (= (itype i) Deq) (not (= (deqh i) NULL))) (and (= (rval (D2e i)) (deqv i)) (= (stype (D2e i)) D2t) (= (loc (D2e i)) (deqh i)) (= (field (D2e i)) Val) (= (etype (D2e i)) R) (= (elabel (D2e i)) Rlx) (soE (D1e i) (D2e i)) ) ) ))
+
+(assert (forall ((i I)) (=> (and (= (itype i) Deq) (not (= (deqh i) NULL))) (and (= (rval (D3e i)) (deqn i)) (= (stype (D3e i)) D3t) (= (loc (D3e i)) (deqh i)) (= (field (D3e i)) Next) (= (etype (D3e i)) R) (= (elabel (D3e i)) Rlx) (soE (D2e i) (D3e i)) ) ) ))
+
+(assert (forall ((i I)) (=> (and (= (itype i) Deq) (not (= (deqh i) NULL))) (and (= (retval i) (deqv i)) (= (rval (D4e i)) (deqh i)) (= (wval (D4e i)) (deqn i)) (= (stype (D4e i)) D4t) (= (loc (D4e i)) head) (= (field (D4e i)) Default) (= (etype (D4e i)) U) (= (elabel (D4e i)) AcqRel) (soE (D3e i) (D4e i)) ) ) ))
+
+(assert (forall ((i I)) (=> (and (= (itype i) Deq) (not (= (deqh i) NULL))) (and (not (= (retval i) EMPTY)) (not (= (retval i) zero))) ) ) )
 ```
 
 Given that there are 3 location classes in the Treiber Stack namely - `Top`,
@@ -184,3 +227,83 @@ Given that there are 3 location classes in the Treiber Stack namely - `Top`,
 ## Detailed explanation of Lock-free queue
 
 ## Detailed explanation of Non-blocking set
+We verify the non-blocking set implementation from the book - Art of
+Multiprocessor programming by Herlihy and Shavit. The set is implemented as a
+linked-list where the values are stored in sorted order. Nodes are added by
+performing a compare-and-swap on the next field of the node storing the value
+smaller than the value being added. Node removal occurs by marking the node
+to be removed. After this, threads cooperatively remove such marked threads.
+
+The code we consider is below -
+
+```c
+void add(int v) {
+  node* pred, curr, succ;
+  while(true) {
+    retry: while(true) {
+      pred = atomic_load_explicit(head, memory_order_relaxed);
+      curr = atomic_load_explicit(&(pred->next), memory_order_relaxed);
+      
+      while(true) {
+        succ = atomic_load_explicit(&(curr->next), memory_order_relaxed);
+        
+        while(is_marked(succ)) {
+          if(!atomic_cas_mark_explicit(&(pred->next), curr, succ, 0, 0));
+            goto retry;
+          curr = succ;
+          succ = atomic_load_explicit(&(curr->next), memory_order_relaxed);
+        }
+
+        if(atomic_load_explicit(&(curr->val), memory_order_relaxed) >= v)
+          break;
+
+        pred = curr;
+        curr = succ;
+      }
+    }
+
+    node* n = malloc(sizeof(node));
+    atomic_store_explicit(&(n->next), curr, memory_order_relaxed);
+    if(atomic_cas_mark_explicit(&(pred->next), curr, node, 0, 0);
+      break;
+  }
+}
+
+int remove(int v) {
+  node* pred, curr, succ;
+  while(true) {
+    retry: while(true) {
+      pred = atomic_load_explicit(head, memory_order_relaxed);
+      curr = atomic_load_explicit(&(pred->next), memory_order_relaxed);
+      
+      while(true) {
+        succ = atomic_load_explicit(&(curr->next), memory_order_relaxed);
+        
+        while(is_marked(succ)) {
+          if(!atomic_cas_mark_explicit(&(pred->next), curr, succ, 0, 0));
+            goto retry;
+          curr = succ;
+          succ = atomic_load_explicit(&(curr->next), memory_order_relaxed);
+        }
+
+        if(atomic_load_explicit(&(curr->val), memory_order_relaxed) >= v)
+          break;
+
+        pred = curr;
+        curr = succ;
+      }
+    }
+
+    if(atomic_load_explicit(&(curr->val), memory_order_relaxed) != v)
+      return 0;
+    else {
+      succ = atomic_load_explicit(&(curr->next), memory_order_relaxed);
+      if(!atomic_cas_mark(&(curr->next), succ, succ, 0, 1))
+        continue
+      atomic_cas_mark(&(pred->next), curr, succ, 0, 0);
+      return 1;
+    }
+  }
+}
+```
+
