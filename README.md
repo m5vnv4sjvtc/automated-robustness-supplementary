@@ -145,9 +145,9 @@ void push(int v) {
 
 int pop() {
   while(true) {
-    node* t = atomic_load_explicit(top, memory_order_acquire);
+    node* t = atomic_load_explicit(top, memory_order_acquire); // LP, pop
     if (t == NULL)
-      return EMPTY; // LP, pop
+      return EMPTY;
     int v = atomic_load_explicit(&(t->val), memory_order_relaxed);
     node* n = atomic_load_explicit(&(t->next), memory_order_relaxed);
     if(atomic_compare_exchange_string_explicit(top, t, n, memory_order_acqrel)) // LP, pop
@@ -619,8 +619,8 @@ Followed by the encoding of the linearizability axioms -
 ```smt2
 ;Linearization Point Constraints
 (declare-fun lp (I) E)
-(assert (forall ((i I)) (=> (= (itype i) Add) (and (= (etype (lp i)) U) (= (loc (lp i)) tail) (= (field (lp i)) Default) (= (wval (lp i)) (newloc i)) (= (rval (lp i)) (loc (E4e i)))))))
-(assert (forall ((i I)) (=> (and (= (itype i) Add) (= (addNext i) NULL))  (hb (E4e i) (lp i)) )  ))
+(assert (forall ((i I)) (=> (= (itype i) Add) (and (= (etype (lp i)) U) (= (field (lp i)) Next) (= (wval (lp i)) (newloc i)) (= (rval (lp i)) (loc (E4e i)))))))
+(assert (forall ((i I)) (=> (= (itype i) Rem) (and (= (etype (lp i)) U) (= (field (lp i)) Mark) (= (wval (lp i)) 
 
 ;LPs of matching add and remove are in hb Order
 (assert (forall ((ie I) (id I)) (=> (matchm ie id) (and (= (addNext ie) NULL) (not (= (remNext id) NULL)) (hb (E4e ie) (D6e id)) )) ))
