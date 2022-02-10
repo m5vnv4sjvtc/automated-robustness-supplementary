@@ -261,7 +261,6 @@ can generate a non-robust witness. Given that there are 3 location classes in
 the Treiber Stack namely - `Top`, `Next` and `Val`, we have the following set
 of cases that we need to verify.
 
-
 | Case | L   | L'  |
 |------|-----|-----|
 |   1  | Top | Top |
@@ -274,11 +273,29 @@ of cases that we need to verify.
 |   8  | Val | Next|
 |   9  | Val | Val |
 
+We detail the SMT query for one case here -
+
+```smt
+; linearizability point axiom encoding
+(assert (forall ((i1 I) (i2 I)) (=> (matchm i1 i2)  (hb (E4e i1) (D1e i2)))))
+
+; Encoding hbSC but non-hb path between R(N.Next) and W(N.Next).
+; UNSAT means that there cannot exist such events
+(assert (= (itype in1) Deq ))
+(assert (= (itype in2) Enq ))
+(assert (rf (E3e in2) (D3e in1))) ; events instantiated to wmax and next e
+(assert (not (hb (E3e in2) (D3e in1))))
+```
+
+Thus as this query returns UNSAT, it can be show that no such path exists. We
+perform the remaining queries in an automated fashion for each pair of location
+and edge pair.
+
 ## Detailed explanation of Lock-free queue
 We verify the following code for the Michael-Scott non-blocking queue - 
 
 ```c
-void enqueue(int v) {
+void enq(int v) {
   while(true) {
     node* n = malloc(sizeof(node));
     atomic_store_explicit(&(n->val), v, memory_order_relaxed);
@@ -298,7 +315,7 @@ void enqueue(int v) {
   }
 }
 
-int dequeue() {
+int deq() {
   while(true) {
     node* h = atomic_load_explicit(head, memory_order_acquire);
     node* t = atomic_load_explicit(tail, memory_order_acquire);
@@ -323,6 +340,148 @@ int dequeue() {
 }
 ```
 
+As before, we present the robustness preserving transformation of the above
+code -
+
+```c
+void enq(int v) {
+  while(true) {
+    node* n = malloc(sizeof(node));
+    atomic_store_explicit(&(n->val), v, memory_order_relaxed);
+    node* t = atomic_load_explicit(tail, memory_order_acquire);
+    node* next = atomic_load_explicit(&(tail->next), memory_order_acquire);
+    
+    if(next == NULL) {
+      bcas_explicit(&(t->next), next, n, memory_order_acqrel))
+      atomic_compare_exchange_strong(tail, t, next, memory_order_acqrel);
+      break;
+    }
+    else { 
+      atomic_compare_exchange_strong(tail, t, next, memory_order_acqrel);
+    }
+  }
+}
+
+int deq() {
+  while(true) {
+    node* h = atomic_load_explicit(head, memory_order_acquire);
+    node* t = atomic_load_explicit(tail, memory_order_acquire);
+    node* n = atomic_load_explicit(&(head->next), memory_order_relaxed);
+
+    if (n == NULL) {
+      return NULL;
+    }
+
+    if (h == l) {
+      atomic_compare_exchange_strong(tail, t, n, memory_order_acqrel);
+      continue;
+    }
+
+    int r = atomic_load_explicit(&(n->val), memory_order_relaxed);
+    bcas_explicit(head, h, n, memory_order_acqrel))
+    break;
+  }
+  return r;
+}
+```
+
+Next we present the encoding of the events - 
+
+```smt
+(assert (forall ((i I)) (=> (and (= (itype i) Deq) (= (deqNext i) NULL) ) (and  (= (retval i) EMPTY) (isBot (D4e i)) (isBot (D5e i)) (isBot (D6e i)) ) ) ))
+
+(assert (forall ((i I)) (=> (and (= (itype i) Deq) (= (deqFirst i) (deqLast i)) (not (= (deqNext i) NULL))  ) (and  (isR (D4e i)) (= (stype (D4e i)) D4t)  (= (loc (D5e i)) tail) (= (field (D5e i)) Default) (soE (D3e i) (D4e i)) ) ) ))
+
+(assert (forall ((i I)) (=> (and (= (itype i) Deq) (not (= (deqNext i) NULL))  (= (deqFirst i) (deqLast i)) (= (rval (D4e i)) (deqLast i)) ) (and (= (etype (D4e i)) U) (= (wval (D4e i)) (deqNext i) ) ) ) ))
+
+(assert (forall ((i I)) (=> (and (= (itype i) Deq) (not (= (deqNext i) NULL)) (= (deqFirst i) (deqLast i))  (not (= (rval (D4e i)) (deqLast i))) ) (= (etype (D4e i)) R)   ) ))
+
+;(assert (forall ((i I)) (=> (and (= (itype i) Deq) (= (rval (D4e i)) (deqFirst i)) (not (= (deqFirst i) (deqLast i))) (= (deqNext i) NULL) ) (and  (isBot (D5e i)) (isBot (D6e i))(isBot (D7e i)) (= (retval i) EMPTY) (completed i) ) )))
+
+(assert (forall ((i I)) (=> (and (= (itype i) Deq)  (not (= (deqNext i) NULL)) ) (and   (= (etype (D5e i)) R) (= (loc (D5e i)) (deqNext i)) (= (field (D5e i)) Val) (= (stype (D5e i)) D5t) (= (rval (D5e i)) (deqRetval i) ) (soE (D4e i) (D5e i)) ) )))
+
+(assert (forall ((i I)) (=> (and (= (itype i) Deq)  (not (= (deqNext i) NULL)) ) (and   (= (loc (D6e i)) head) (= (field (D6e i)) Default) (= (stype (D6e i)) D6t) (= (rval (D6e i)) (deqFirst i) ) (= (wval (D6e i)) (deqNext i)) (= (etype (D6e i)) U)  (soE (D5e i) (D6e i)) (= (retval i) (deqRetval i)) ) )))
+
+(assert (forall ((i I)) (=> (= (itype i) Enq) (and (= (etype (E1e i)) W)  (= (loc (E1e i)) (newloc i)) (= (stype (E1e i)) E1t) (= (field (E1e i)) Val) (= (wval (E1e i)) (argval i)) ) ) ))
+
+
+(assert (forall ((i I)) (=> (= (itype i) Enq) (soE (E1e i) (E2e i)) ) ))
+(assert (forall ((i I)) (=> (= (itype i) Enq) (and (= (etype (E2e i)) R)  (= (loc (E2e i)) tail) (= (stype (E2e i)) E2t) (= (field (E2e i)) Default) (= (rval (E2e i)) (enqLast i)) ) ) ))
+
+
+(assert (forall ((i I)) (=> (= (itype i) Enq) (soE (E2e i) (E3e i)) ) ))
+(assert (forall ((i I)) (=> (= (itype i) Enq) (and (= (etype (E3e i)) R)  (= (loc (E3e i)) (enqLast i)) (= (stype (E3e i)) E3t) (= (field (E3e i)) Next) (= (rval (E3e i)) (enqNext i)) ) ) ))
+
+
+(assert (forall ((i I)) (=> (= (itype i) Enq) (soE (E3e i) (E4e i)) ) ))
+;(assert (forall ((i I)) (=> (= (itype i) Enq) (and (= (etype (E4e i)) R)  (= (loc (E4e i)) tail) (= (stype (E4e i)) E4t) (= (field (E4e i)) Default)  ) ) ))
+
+
+;(assert (forall ((i I)) (=> (= (itype i) Enq) (soE (E4e i) (E5e i)) ) ))
+(assert (forall ((i I)) (=> (and (= (itype i) Enq)  (= (enqNext i) NULL) ) (and  (= (loc (E4e i)) (enqLast i) ) (= (field (E4e i)) Next) (= (stype (E4e i)) E4t) (isBot (E6e i)) (= (rval (E4e i)) (enqNext i) ) (= (etype (E4e i)) U) (= (wval (E4e i)) (newloc i) )  ) ) ))
+
+(assert (forall ((i I)) (=> (and (= (itype i) Enq)  (= (enqNext i) NULL)  ) (and   (isR (E5e i)) (= (stype (E5e i)) E5t) (= (loc (E5e i)) tail ) (= (field (E5e i)) Default ) (soE (E4e i) (E5e i))  ) ) ))
+
+;(assert (forall ((i I)) (=> (and (= (itype i) Enq) (= (enqNext i) NULL) (not (= (rval (E5e i)) (enqNext i) )) ) (and  (= (etype (E5e i)) R) (isBot (E6e i) ) (not (completed i)) ) ) ))
+
+(assert (forall ((i I)) (=> (and (= (itype i) Enq)  (= (enqNext i) NULL)  (= (rval (E5e i)) (enqLast i)) ) (and  (= (etype (E5e i)) U) (= (wval (E5e i)) (newloc i) )   ) ) ))
+(assert (forall ((i I)) (=> (and (= (itype i) Enq)  (= (enqNext i) NULL)  (not (= (rval (E5e i)) (enqLast i))) )  (= (etype (E5e i)) R)     ) ))
+
+
+(assert (forall ((i I)) (=> (and (= (itype i) Enq)  (not (= (enqNext i) NULL)) ) (and (isBot (E4e i)) (isBot (E5e i))  (= (loc (E6e i)) tail) (= (field (E6e i)) Default) (= (stype (E6e i)) E6t ) (soE (E3e i) (E6e i)) (= (rval (E6e i)) (enqLast i) ) (= (etype (E6e i)) U) (= (wval (E6e i)) (enqNext i) ) ) ) ))
+```
+
+Followed by the encoding of the linearizability axioms -
+
+```smt2
+;Linearization Point Constraints
+;Needed for L=N.Next,L'=tail
+(declare-fun lp (I) E)
+(assert (forall ((i I)) (=> (= (itype i) Enq) (and (= (etype (lp i)) U) (= (loc (lp i)) tail) (= (field (lp i)) Default) (= (wval (lp i)) (newloc i)) (= (rval (lp i)) (loc (E4e i)))  ) )  ))
+(assert (forall ((i I)) (=> (and (= (itype i) Enq) (= (enqNext i) NULL))  (hb (E4e i) (lp i)) )  ))
+;Needed for L=N.Next,L'=head,deq invocation returns empty
+;LPs of matching enqueue and dequeue are in hb Order
+(assert (forall ((ie I) (id I)) (=> (matchm ie id) (and (= (enqNext ie) NULL) (not (= (deqNext id) NULL)) (hb (E4e ie) (D6e id)) )) ))
+;Empty axiom
+(assert (forall ((id1 I) (ie I)) (exists ((id2 I))(=> (and (= (itype id1) Deq)  (= (retval id1) EMPTY) (= (itype ie) Enq) (= (enqNext ie) NULL) (hb (E4e ie) (D1e id1)) ) (and (= (itype id2) Deq) (matchm ie id2) (not (= (deqNext id2) NULL))  (hb (D6e id2) (D1e id1))  ) ))))
+```
+
+For this case, we have the following set of locations that we need to verify -
+
+| Case | L    | L'   |
+|------|------|------|
+|   1  | Head | Head |
+|   2  | Head | Tail |
+|   3  | Head | Next |
+|   4  | Head | Val  |
+|   5  | Tail | Head | 
+|   6  | Tail | Tail |
+|   7  | Tail | Next |
+|   8  | Tail | Val  |
+|   9  | Next | Head |
+|   10 | Next | Tail |
+|   11 | Next | Next |
+|   12 | Next | Val  |
+|   13 | Val  | Head |
+|   14 | Val  | Tail |
+|   15 | Val  | Next |
+|   16 | Val  | Val  |
+
+We show the query for one such case -
+
+```smt2
+(push)
+ ; Check for L = Next, L'= Tail
+ (assert (= (itype in1) Enq))
+ (assert (= (enqNext in1) NULL))
+ (assert (= (itype in2) Enq))
+ (assert (= (itype in3) Enq ))
+ (assert (= (enqNext in3) NULL))
+ (assert (fr (E2e in2) (E5e in3)))
+ (assert (not (hb (E4e in1) (E5e in3))))
+ (check-sat)
+(pop)
+```
 
 ## Detailed explanation of Non-blocking set
 We verify the non-blocking set implementation from the book - Art of
