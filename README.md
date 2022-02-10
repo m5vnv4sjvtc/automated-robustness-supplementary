@@ -447,6 +447,7 @@ For this case, we have the following set of locations that we need to verify -
 We show the query for one such case -
 
 ```smt2
+; Enq -> Enq , L = N.Next, L' = Tail
 (assert (= (itype in1) Enq ))
 (assert (= (enqNext in1) NULL))
 (assert (= (itype in2) Enq ))
