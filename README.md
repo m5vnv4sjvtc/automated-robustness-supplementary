@@ -307,10 +307,10 @@ int deq() {
   while(true) {
     node* h = atomic_load_explicit(head, memory_order_acquire);
     node* t = atomic_load_explicit(tail, memory_order_acquire);
-    node* n = atomic_load_explicit(&(head->next), memory_order_relaxed);
+    node* n = atomic_load_explicit(&(head->next), memory_order_relaxed);  // LP, deq
 
     if (n == NULL) {
-      return NULL; // LP, deq
+      return NULL;
     }
 
     if (h == l) {
