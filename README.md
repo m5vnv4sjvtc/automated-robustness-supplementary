@@ -600,43 +600,36 @@ Next we present the encoding of the events -
 
 (assert (forall ((i I)) (=> (and (= (itype i) Add) (and (isR (E5e i)) (= (elabel (E5e i) Acq)) (= (stype (E5e i)) E5t) (= (loc (E5e i)) (loc (E3e i))) (= (field (E5e i)) Next))))))
 
-(assert (forall ((i I)) (=> (and (= (itype i) Add) (= (etype (E6e i) W)) (= (elabel (E6e i) Rlx)) (= (loc (E6e i)) (loc (E3e i))) (= (field (E6e i)) Next) (= (stype (E6e i)) E6t) (= (rval (E6e i)) ((= (wval (E6e i)) (addNext i)))))))
+(assert (forall ((i I)) (=> (and (= (itype i) Add) (= (etype (E6e i) W)) (= (elabel (E6e i) Rlx)) (= (loc (E6e i)) (loc (E3e i))) (= (field (E6e i)) Next) (= (stype (E6e i)) E6t) (= (rval (E6e i)))))))
 
-(assert (forall ((i I)) (=> (and (= (itype i) Add) (= (etype (E7e i) U)) (= (elabel (E7e i) AcqRel)) (= (loc (E7e i)) (loc (E3e i))) (= (field (E7e i)) Default) (= (stype (E7e i)) E7t) (= (rval (E7e i)) (enqLast i)) (= (etype (E7e i)) U) (= (elabel (E7e i) AcqRel)) ((= (wval (E7e i)) (addNext i)))))))
+(assert (forall ((i I)) (=> (and (= (itype i) Add) (= (etype (E7e i) U)) (= (elabel (E7e i) AcqRel)) (= (loc (E7e i)) (loc (E3e i))) (= (field (E7e i)) Default) (= (stype (E7e i)) E7t)))))
 
+(assert (forall ((i I)) (=> (= (itype i) Add) (and (= (etype (D1e i)) R) (= (elabel (D1e i)) Rlx)  (= (loc (D1e i)) (newloc i)) (= (stype (D1e i)) D1t) (= (field (D1e i)) Default) (= (wval (D1e i)) (argval i))))))
 
-(assert (forall ((i I)) (=> (= (itype i) Rem) (and (= (rval (D1e i)) (remFirst i)) (= (elabel (D1e i) Acq)) (= (stype (D1e i)) D1t) (= (loc (D1e i)) head) (= (field (D1e i)) Default) (= (etype (D1e i)) R)))))
+(assert (forall ((i I)) (=> (= (itype i) Add) (and (= (etype (D2e i)) R) (= (elabel (D2e i)) Rlx) (= (loc (D2e i)) (newloc i)) (= (stype (D2e i)) D2t) (= (field (D2e i)) Default) (= (rval (D2e i)))))))
 
-(assert (forall ((i I)) (=> (= (itype i) Rem) (and (= (rval (D2e i)) (remLast i)) (= (elabel (D2e i) Acq)) (= (stype (D2e i)) D2t) (= (loc (D2e i)) tail) (= (field (D2e i)) Default) (= (etype (D2e i)) R)))))
+(assert (forall ((i I)) (=> (= (itype i) Add) (and (= (etype (D3e i)) R) (= (elabel (D3e i)) Rlx) (= (loc (D3e i)) (newloc i)) (= (stype (D3e i)) D3t) (= (field (D3e i)) Default) (= (rval (D3e i)))))))
 
-(assert (forall ((i I)) (=> (= (itype i) Rem) (and (= (rval (D3e i)) (remNext i)) (= (elabel (D3e i) Rlx)) (= (stype (D3e i)) D3t) (= (loc (D3e i)) (remFirst i)) (= (field (D3e i)) Next) (= (etype (D3e i)) R)))))
+(assert (forall ((i I)) (=> (and (= (itype i) Add) (and (= (loc (D4e i)) (loc (D3e i))) (= etype (D4e i) U) (= (elabel (D4e i)) Acqrel) (= ismark (loc (D3e i))) (= (field (D4e i)) Next) (= (stype (D4e i)) D4t))))))
 
-(assert (forall ((i I)) (=> (and (= (itype i) Rem) (= (remNext i) NULL) ) (and  (= (retval i) EMPTY) (isBot (D4e i)) (isBot (D5e i)) (isBot (D6e i))))))
+(assert (forall ((i I)) (=> (and (= (itype i) Add) (and (isR (D5e i)) (= (elabel (D5e i) Acq)) (= (stype (D5e i)) D5t) (= (loc (D5e i)) (loc (D3e i))) (= (field (D5e i)) Next))))))
 
-(assert (forall ((i I)) (=> (and (= (itype i) Rem) (= (remFirst i) (remLast i)) (not (= (remNext i) NULL))) (and (isR (D4e i)) (= (stype (D4e i)) D4t) (= (loc (D5e i)) tail) (= (field (D5e i)) Default)))))
+(assert (forall ((i I)) (=> (and (= (itype i) Add) (= (etype (D6e i) U)) (= (elabel (E6e i) AcqRel)) (ismark (E6e i)) (= (loc (E6e i)) (loc (E3e i))) (= (field (E6e i)) Next) (= (stype (E6e i)) E6t) (= (rval (E6e i)))))))
 
-(assert (forall ((i I)) (=> (and (= (itype i) Rem) (not (= (remNext i) NULL))  (= (remFirst i) (remLast i)) (= (rval (D4e i)) (remLast i))) (and (= (etype (D4e i)) U) (= (elabel (D4e i) AcqRel)) (= (wval (D4e i)) (remNext i))))))
-
-(assert (forall ((i I)) (=> (and (= (itype i) Rem) (not (= (remNext i) NULL)) (= (remFirst i) (remLast i)) (not (= (rval (D4e i)) (remLast i)))) (= (etype (D4e i)) R) (= (elabel (D4e i) Acq)))))
-
-(assert (forall ((i I)) (=> (and (= (itype i) Rem)  (not (= (remNext i) NULL))) (and (= (etype (D5e i)) R) (= (elabel (D5e i) Rlx)) (= (loc (D5e i)) (remNext i)) (= (field (D5e i)) Val) (= (stype (D5e i)) D5t) (= (rval (D5e i)) (remRetval i))))))
-
-(assert (forall ((i I)) (=> (and (= (itype i) Rem)  (not (= (remNext i) NULL))) (and (= (loc (D6e i)) head) (= (field (D6e i)) Default) (= (stype (D6e i)) D6t) (= (rval (D6e i)) (remFirst i) ) (= (wval (D6e i)) (remNext i)) (= (etype (D6e i)) U) (= elabel (D6e i) AcqRel) (= (retval i) (remRetval i))))))
+(assert (forall ((i I)) (=> (and (= (itype i) Add) (= (etype (D7e i) U)) (= (elabel (E7e i) AcqRel)) (isMark (E6e i)) (= (loc (E7e i)) (loc (E3e i))) (= (field (E7e i)) Default) (= (stype (E7e i)) E7t)))))
 ```
 
 Followed by the encoding of the linearizability axioms -
 
 ```smt2
-;Linearization Point Constraints
+; Linearization Point Constraints
+; Note the second constraint encodes that the linearization point is external to the remove invocation
 (declare-fun lp (I) E)
-(assert (forall ((i I)) (=> (= (itype i) Add) (and (= (etype (lp i)) U) (= (field (lp i)) Next) (= (wval (lp i)) (newloc i)) (= (rval (lp i)) (loc (E4e i)))))))
-(assert (forall ((i I)) (=> (= (itype i) Rem) (and (= (etype (lp i)) U) (= (field (lp i)) Mark) (= (wval (lp i)) 
+(assert (forall ((i I)) (=> (= (itype i) Add) (and (= (lp I) (E7e I))))))
+(assert (forall ((i1 I) (i2 I)) (=> (= (itype i1) Rem) (or (= (lp i1) (E4e i1)) (= (lp i1) (E4e i2))))))
 
 ;LPs of matching add and remove are in hb Order
-(assert (forall ((ie I) (id I)) (=> (matchm ie id) (and (= (addNext ie) NULL) (not (= (remNext id) NULL)) (hb (E4e ie) (D6e id)) )) ))
-
-;Empty axiom
-(assert (forall ((id1 I) (ie I)) (exists ((id2 I))(=> (and (= (itype id1) Rem)  (= (retval id1) EMPTY) (= (itype ie) Add) (= (addNext ie) NULL) (hb (E4e ie) (D1e id1)) ) (and (= (itype id2) Rem) (matchm ie id2) (not (= (remNext id2) NULL))  (hb (D6e id2) (D1e id1))  ) ))))
+(assert (forall ((i1 I) (i2 I)) (=> (matchm i1 i2) (hb (lp i1) (lp i2)))))
 ```
 
 For this case, we have the following set of locations that we need to verify -
