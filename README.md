@@ -314,7 +314,7 @@ int deq() {
     }
 
     if (h == l) {
-      atomic_compare_exchange_strong(tail, t, n, memory_order_acqrel); // LP, enq
+      atomic_compare_exchange_strong(tail, t, n, memory_order_acqrel);
       continue;
     }
 
@@ -588,17 +588,17 @@ int remove(int v) {
 Next we present the encoding of the events - 
 
 ```smt
-(assert (forall ((i I)) (=> (= (itype i) Add) (and (= (etype (E1e i)) W) (= (elabel (E1e i)) Rlx)  (= (loc (E1e i)) (newloc i)) (= (stype (E1e i)) E1t) (= (field (E1e i)) Val) (= (wval (E1e i)) (argval i))))))
+(assert (forall ((i I)) (=> (= (itype i) Add) (and (= (etype (E1e i)) R) (= (elabel (E1e i)) Rlx)  (= (loc (E1e i)) (newloc i)) (= (stype (E1e i)) E1t) (= (field (E1e i)) Default) (= (wval (E1e i)) (argval i))))))
 
-(assert (forall ((i I)) (=> (= (itype i) Add) (and (= (etype (E2e i)) R) (= (elabel (E2e i)) Acq) (= (loc (E2e i)) tail) (= (stype (E2e i)) E2t) (= (field (E2e i)) Default) (= (rval (E2e i)) (enqLast i))))))
+(assert (forall ((i I)) (=> (= (itype i) Add) (and (= (etype (E2e i)) R) (= (elabel (E2e i)) Rlx) (= (loc (E2e i)) (newloc i)) (= (stype (E2e i)) E2t) (= (field (E2e i)) Default) (= (rval (E2e i)))))))
 
-(assert (forall ((i I)) (=> (= (itype i) Add) (and (= (etype (E3e i)) R) (= (elabel (E3e i)) Rlx) (= (loc (E3e i)) (enqLast i)) (= (stype (E3e i)) E3t) (= (field (E3e i)) Next) (= (rval (E3e i)) (addNext i))))))
+(assert (forall ((i I)) (=> (= (itype i) Add) (and (= (etype (E3e i)) R) (= (elabel (E3e i)) Rlx) (= (loc (E3e i)) (newloc i)) (= (stype (E3e i)) E3t) (= (field (E3e i)) Default) (= (rval (E3e i)))))))
 
-(assert (forall ((i I)) (=> (and (= (itype i) Add)  (= (addNext i) NULL)) (and (= (loc (E4e i)) (enqLast i)) (= (elabel (E4e i)) Acqrel) (= (field (E4e i)) Next) (= (stype (E4e i)) E4t) (isBot (E6e i)) (= (rval (E4e i)) (addNext i)) (= (etype (E4e i)) U) (= (wval (E4e i)) (newloc i))))))
+(assert (forall ((i I)) (=> (and (= (itype i) Add) (and (= (loc (E4e i)) (loc (E3e i))) (= etype (E4e i) U) (= (elabel (E4e i)) Acqrel) (= ismark (loc (E3e i))) (= (field (E4e i)) Next) (= (stype (E4e i)) E4t))))))
 
-(assert (forall ((i I)) (=> (and (= (itype i) Add)  (= (addNext i) NULL)) (and (isR (E5e i)) (= (elabel (E5e i) Acq)) (= (stype (E5e i)) E5t) (= (loc (E5e i)) tail) (= (field (E5e i)) Default)))))
+(assert (forall ((i I)) (=> (and (= (itype i) Add) (= (addNext i) NULL)) (and (isR (E5e i)) (= (elabel (E5e i) Acq)) (= (stype (E5e i)) E5t) (= (loc (E5e i)) tail) (= (field (E5e i)) Default)))))
 
-(assert (forall ((i I)) (=> (and (= (itype i) Add)  (= (addNext i) NULL)  (= (rval (E5e i)) (enqLast i)) ) (and  (= (etype (E5e i)) U) (= (elabel (E5e i) AcqRel)) (= (wval (E5e i)) (newloc i))))))
+(assert (forall ((i I)) (=> (and (= (itype i) Add) (= (addNext i) NULL) (= (rval (E5e i)) (enqLast i)) ) (and  (= (etype (E5e i)) U) (= (elabel (E5e i) AcqRel)) (= (wval (E5e i)) (newloc i))))))
 
 (assert (forall ((i I)) (=> (and (= (itype i) Add)  (= (addNext i) NULL)  (not (= (rval (E5e i)) (enqLast i))))  (= (etype (E5e i)) R) (= (elabel (E5e i) Acq)))))
 
