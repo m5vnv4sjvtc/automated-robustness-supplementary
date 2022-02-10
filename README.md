@@ -465,6 +465,13 @@ performing a compare-and-swap on the next field of the node storing the value
 smaller than the value being added. Node removal occurs by marking the node
 to be removed. After this, threads cooperatively remove such marked threads.
 
+In this example, note that we use a bit from the pointer to denote whether
+a pointer is marked or not. In terms of the source code, this shows up
+as the function `atomic_compare_exchange_strong_mark_explicit` which takes
+an expected mark value and the mark to update. In the SMT encoding, this
+can just be encoded as another field in the node pointer, as we can atomically
+update both fields.
+
 The code we consider is below -
 
 ```c
@@ -545,18 +552,16 @@ above code, with the memory events marked as comments in the code -
 ```c
 void add(int v) {
   node* pred, curr, succ;
-  pred = atomic_load_explicit(head, memory_order_relaxed);
-  curr = atomic_load_explicit(&(pred->next), memory_order_relaxed);
-  
-  succ = atomic_load_explicit(&(curr->next), memory_order_relaxed);
+  pred = atomic_load_explicit(head, memory_order_relaxed);                // E1e
+  curr = atomic_load_explicit(&(pred->next), memory_order_relaxed);       // E2e
+  succ = atomic_load_explicit(&(curr->next), memory_order_relaxed);       // E3e
     
-  bcas_mark_explicit(&(pred->next), curr, succ, 0, 0);
-  curr = succ;
-  succ = atomic_load_explicit(&(curr->next), memory_order_relaxed);
+  atomic_compare_exchange_mark_explicit(&(pred->next), curr, succ, 0, 0); // E4e
+  succ = atomic_load_explicit(&(curr->next), memory_order_relaxed);       // E5e
 
   node* n = malloc(sizeof(node));
-  atomic_store_explicit(&(n->next), curr, memory_order_relaxed);
-  atomic_cas_mark_explicit(&(pred->next), curr, node, 0, 0);
+  atomic_store_explicit(&(n->next), curr, memory_order_relaxed);          // E6e
+  atomic_cas_mark_explicit(&(pred->next), curr, node, 0, 0);              // E7e
 }
 
 int remove(int v) {
