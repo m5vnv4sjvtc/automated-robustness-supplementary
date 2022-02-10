@@ -478,7 +478,7 @@ void add(int v) {
         succ = atomic_load_explicit(&(curr->next), memory_order_relaxed);
         
         while(is_marked(succ)) {
-          if(!atomic_cas_mark_explicit(&(pred->next), curr, succ, 0, 0)); // LP, add
+          if(!atomic_cas_mark_explicit(&(pred->next), curr, succ, 0, 0)); // LP, remove
             goto retry;
           curr = succ;
           succ = atomic_load_explicit(&(curr->next), memory_order_relaxed);
@@ -493,8 +493,8 @@ void add(int v) {
     }
 
     node* n = malloc(sizeof(node));
-    atomic_store_explicit(&(n->next), curr, memory_order_relaxed); // LP, remove
-    if(atomic_cas_mark_explicit(&(pred->next), curr, node, 0, 0);
+    atomic_store_explicit(&(n->next), curr, memory_order_relaxed);
+    if(atomic_cas_mark_explicit(&(pred->next), curr, node, 0, 0); // LP, add
       break;
   }
 }
@@ -510,7 +510,7 @@ int remove(int v) {
         succ = atomic_load_explicit(&(curr->next), memory_order_relaxed);
         
         while(is_marked(succ)) {
-          if(!atomic_cas_mark_explicit(&(pred->next), curr, succ, 0, 0));
+          if(!atomic_cas_mark_explicit(&(pred->next), curr, succ, 0, 0)); // LP, remove
             goto retry;
           curr = succ;
           succ = atomic_load_explicit(&(curr->next), memory_order_relaxed);
@@ -549,15 +549,9 @@ void add(int v) {
   
   succ = atomic_load_explicit(&(curr->next), memory_order_relaxed);
     
-  if(!atomic_cas_mark_explicit(&(pred->next), curr, succ, 0, 0));
+  bcas_mark_explicit(&(pred->next), curr, succ, 0, 0);
   curr = succ;
   succ = atomic_load_explicit(&(curr->next), memory_order_relaxed);
-
-  if(atomic_load_explicit(&(curr->val), memory_order_relaxed) >= v)
-  break;
-
-  pred = curr;
-  curr = succ;
 
   node* n = malloc(sizeof(node));
   atomic_store_explicit(&(n->next), curr, memory_order_relaxed);
@@ -571,15 +565,12 @@ int remove(int v) {
   
   succ = atomic_load_explicit(&(curr->next), memory_order_relaxed);
     
-  atomic_cas_mark_explicit(&(pred->next), curr, succ, 0, 0));
+  bcas_mark_explicit(&(pred->next), curr, succ, 0, 0));
   curr = succ;
   succ = atomic_load_explicit(&(curr->next), memory_order_relaxed);
-  atomic_load_explicit(&(curr->val), memory_order_relaxed) >= v
-  pred = curr;
-  curr = succ;
 
   succ = atomic_load_explicit(&(curr->next), memory_order_relaxed);
-  if(!atomic_cas_mark(&(curr->next), succ, succ, 0, 1))
+  atomic_cas_mark(&(curr->next), succ, succ, 0, 1);
   atomic_cas_mark(&(pred->next), curr, succ, 0, 0);
 }
 ```
