@@ -329,12 +329,14 @@ int deq() {
 ```
 
 The comments of the form `LP, deq` and `LP, enq` represent the linearization
-points provided by the user. In this benchmark, note that enqueue calls which
-do not add a new node but just move tail forward (when it is lagging) have
-their linearization points at the update to tail. We consider these as
-additonal LP's. As before, we present the robustness preserving
-transformation of the above code, with the memory events marked as comments
-in the code -
+points provided by the user. Moreover, for enqueue operations, the update to
+tail writing the location of the newly enqueued node can also be considered as
+a LP. This update to tail may happen in the same invocation, or in another
+enqueue or dequeue invocation which sees the tail lagging behind and first
+performs the update before performing its own operation. Hence, the LP for this
+helping enqueue or dequeue will clearly happen later. As before, we present the
+robustness preserving transformation of the above code, with the memory events
+marked as comments in the code -
 
 ```c
 void enq(int v) {
@@ -596,13 +598,9 @@ Next we present the encoding of the events -
 
 (assert (forall ((i I)) (=> (and (= (itype i) Add) (and (= (loc (E4e i)) (loc (E3e i))) (= etype (E4e i) U) (= (elabel (E4e i)) Acqrel) (= ismark (loc (E3e i))) (= (field (E4e i)) Next) (= (stype (E4e i)) E4t))))))
 
-(assert (forall ((i I)) (=> (and (= (itype i) Add) (= (addNext i) NULL)) (and (isR (E5e i)) (= (elabel (E5e i) Acq)) (= (stype (E5e i)) E5t) (= (loc (E5e i)) tail) (= (field (E5e i)) Default)))))
+(assert (forall ((i I)) (=> (and (= (itype i) Add) (and (isR (E5e i)) (= (elabel (E5e i) Acq)) (= (stype (E5e i)) E5t) (= (loc (E5e i)) (loc (E3e i))) (= (field (E5e i)) Next))))))
 
-(assert (forall ((i I)) (=> (and (= (itype i) Add) (= (addNext i) NULL) (= (rval (E5e i)) (enqLast i)) ) (and  (= (etype (E5e i)) U) (= (elabel (E5e i) AcqRel)) (= (wval (E5e i)) (newloc i))))))
-
-(assert (forall ((i I)) (=> (and (= (itype i) Add)  (= (addNext i) NULL)  (not (= (rval (E5e i)) (enqLast i))))  (= (etype (E5e i)) R) (= (elabel (E5e i) Acq)))))
-
-(assert (forall ((i I)) (=> (and (= (itype i) Add)  (not (= (addNext i) NULL)) ) (and (isBot (E4e i)) (isBot (E5e i))  (= (loc (E6e i)) tail) (= (field (E6e i)) Default) (= (stype (E6e i)) E6t) (= (rval (E6e i)) (enqLast i)) (= (etype (E6e i)) U) (= (elabel (E6e i) AcqRel)) ((= (wval (E6e i)) (addNext i)))))))
+(assert (forall ((i I)) (=> (and (= (itype i) Add) (= (etype (E6e i) U)) (= (elabel (E6e i) Ac (= (loc (E6e i)) (loc (E3e i))) (= (field (E6e i)) Default) (= (stype (E6e i)) E6t) (= (rval (E6e i)) (enqLast i)) (= (etype (E6e i)) U) (= (elabel (E6e i) AcqRel)) ((= (wval (E6e i)) (addNext i)))))))
 
 (assert (forall ((i I)) (=> (= (itype i) Rem) (and (= (rval (D1e i)) (remFirst i)) (= (elabel (D1e i) Acq)) (= (stype (D1e i)) D1t) (= (loc (D1e i)) head) (= (field (D1e i)) Default) (= (etype (D1e i)) R)))))
 
