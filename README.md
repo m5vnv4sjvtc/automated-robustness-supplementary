@@ -280,7 +280,7 @@ perform the remaining queries in an automated fashion for each pair of location
 and edge pair.
 
 ## Detailed explanation of Lock-free queue
-We verify the following code for the Michael-Scott non-blocking queue - 
+We verify the following code for the Michael-Scott non-blocking queue -
 
 ```c
 void enq(int v) {
@@ -291,8 +291,8 @@ void enq(int v) {
     node* next = atomic_load_explicit(&(tail->next), memory_order_acquire);
     
     if(next == NULL) {
-      if(atomic_compare_exchange_strong(&(t->next), next, n, memory_order_acqrel))
-        atomic_compare_exchange_strong(tail, t, next, memory_order_acqrel); // LP, enq
+      if(atomic_compare_exchange_strong(&(t->next), next, n, memory_order_acqrel)) // LP, enq
+        atomic_compare_exchange_strong(tail, t, next, memory_order_acqrel);
       }
       break;
     }
@@ -552,32 +552,32 @@ above code, with the memory events marked as comments in the code -
 ```c
 void add(int v) {
   node* pred, curr, succ;
-  pred = atomic_load_explicit(head, memory_order_relaxed);                // E1e
-  curr = atomic_load_explicit(&(pred->next), memory_order_relaxed);       // E2e
-  succ = atomic_load_explicit(&(curr->next), memory_order_relaxed);       // E3e
+  pred = atomic_load_explicit(head, memory_order_relaxed);                       // E1e
+  curr = atomic_load_explicit(&(pred->next), memory_order_relaxed);              // E2e
+  curr = succ;
+  succ = atomic_load_explicit(&(curr->next), memory_order_relaxed);              // E3e
     
-  atomic_compare_exchange_mark_explicit(&(pred->next), curr, succ, 0, 0); // E4e
-  succ = atomic_load_explicit(&(curr->next), memory_order_relaxed);       // E5e
+  atomic_compare_exchange_strong_mark_explicit(&(pred->next), curr, succ, 0, 0); // E4e
+  succ = atomic_load_explicit(&(curr->next), memory_order_relaxed);              // E5e
 
   node* n = malloc(sizeof(node));
-  atomic_store_explicit(&(n->next), curr, memory_order_relaxed);          // E6e
-  atomic_cas_mark_explicit(&(pred->next), curr, node, 0, 0);              // E7e
+  atomic_store_explicit(&(n->next), curr, memory_order_relaxed);                 // E6e
+  atomic_cas_mark_explicit(&(pred->next), curr, node, 0, 0);                     // E7e
 }
 
 int remove(int v) {
   node* pred, curr, succ;
-  pred = atomic_load_explicit(head, memory_order_relaxed);
-  curr = atomic_load_explicit(&(pred->next), memory_order_relaxed);
-  
-  succ = atomic_load_explicit(&(curr->next), memory_order_relaxed);
+  pred = atomic_load_explicit(head, memory_order_relaxed);                       // D1e
+  curr = atomic_load_explicit(&(pred->next), memory_order_relaxed);              // D2e
+  succ = atomic_load_explicit(&(curr->next), memory_order_relaxed);              // D3e
     
-  bcas_mark_explicit(&(pred->next), curr, succ, 0, 0));
+  atomic_compare_exchange_mark_explicit(&(pred->next), curr, succ, 0, 0));       // D4e      
   curr = succ;
-  succ = atomic_load_explicit(&(curr->next), memory_order_relaxed);
+  succ = atomic_load_explicit(&(curr->next), memory_order_relaxed);              // D5e
 
-  succ = atomic_load_explicit(&(curr->next), memory_order_relaxed);
-  atomic_cas_mark(&(curr->next), succ, succ, 0, 1);
-  atomic_cas_mark(&(pred->next), curr, succ, 0, 0);
+  succ = atomic_load_explicit(&(curr->next), memory_order_relaxed);              // D6e
+  atomic_cas_mark(&(curr->next), succ, succ, 0, 1);                              // D7e
+  atomic_cas_mark(&(pred->next), curr, succ, 0, 0);                              // D8e
 }
 ```
 
