@@ -105,7 +105,7 @@ Finally, the linearizability axioms are specified in the form of relations
 between invocations. For example, the AddRem axiom is specified as -
 
 ```
-(declare-fun matchm (I I) Bool) ; utility function for use in axioms
+(declare-fun matchm (I I) Bool)                            ; utility function for use in axioms
 (assert (forall ((i1 I) (i2 I))
                 (= (matchm i1 i2)
                    (and 
@@ -219,41 +219,29 @@ to each memory operation are generated. First we show the memory events
 generated for the push method -
 
 ```smt
-(assert (forall ((i I)) (=> (= (itype i) Enq) (and (= (etype (E1e i)) W) (= (elabel (E1e i)) Rlx)  (= (loc (E1e i)) (newloc i)) (= (stype (E1e i)) E1t) (= (field (E1e i)) Val) (= (wval (E1e i)) (argval i)) (= (valevent i) (E1e i))  ) ) ))
+(assert (forall ((i I)) (=> (= (itype i) Enq) (and (= (etype (E1e i)) W) (= (elabel (E1e i)) Rlx)  (= (loc (E1e i)) (newloc i)) (= (stype (E1e i)) E1t) (= (field (E1e i)) Val) (= (wval (E1e i)) (argval i)) (= (valevent i) (E1e i))))))
 
-(assert (forall ((i I)) (=> (= (itype i) Enq) (soE (E1e i) (E2e i)) ) ))
-(assert (forall ((i I)) (=> (= (itype i) Enq) (and (= (etype (E2e i)) R) (= (elabel (E2e i)) Rlx)  (= (loc (E2e i)) head) (= (stype (E2e i)) E2t) (= (field (E2e i)) Default) (= (rval (E2e i)) (enqh i)) ) ) ))
+(assert (forall ((i I)) (=> (= (itype i) Enq) (and (= (etype (E2e i)) R) (= (elabel (E2e i)) Rlx)  (= (loc (E2e i)) head) (= (stype (E2e i)) E2t) (= (field (E2e i)) Default) (= (rval (E2e i)) (enqh i))))))
 
+(assert (forall ((i I)) (=> (= (itype i) Enq) (and (= (etype (E3e i)) W) (= (elabel (E3e i)) Rlx)  (= (loc (E3e i)) (newloc i)) (= (stype (E3e i)) E3t) (= (field (E3e i)) Next) (= (wval (E3e i)) (enqh i))))))
 
-(assert (forall ((i I)) (=> (= (itype i) Enq) (soE (E2e i) (E3e i)) ) ))
-(assert (forall ((i I)) (=> (= (itype i) Enq) (and (= (etype (E3e i)) W) (= (elabel (E3e i)) Rlx)  (= (loc (E3e i)) (newloc i)) (= (stype (E3e i)) E3t) (= (field (E3e i)) Next) (= (wval (E3e i)) (enqh i)) ) ) ))
-
-
-(assert (forall ((i I)) (=> (= (itype i) Enq) (soE (E3e i) (E4e i)) ) ))
-(assert (forall ((i I)) (=> (= (itype i) Enq) (and (= (etype (E4e i)) U) (= (elabel (E4e i)) AcqRel)  (= (loc (E4e i)) head) (= (stype (E4e i)) E4t) (= (field (E4e i)) Default) (= (rval (E4e i)) (enqh i)) (= (wval (E4e i)) (newloc i) ) ) ) ))
+(assert (forall ((i I)) (=> (= (itype i) Enq) (and (= (etype (E4e i)) U) (= (elabel (E4e i)) AcqRel)  (= (loc (E4e i)) head) (= (stype (E4e i)) E4t) (= (field (E4e i)) Default) (= (rval (E4e i)) (enqh i)) (= (wval (E4e i)) (newloc i))))))
 ```
 
 Then we show the memory events corresponding to the pop method -
 
 ```smt
-(assert (forall ((i I))
-  (=> (= (itype i) Deq)
-  (and
-    (= (rval (D1e i)) (deqh i))
-    (= (loc (D1e i)) top)
-    (= (field (D1e i)) Default)
-    (= (etype (D1e i)) R)
-    (= (elabel (D1e i)) Acq)))))
+(assert (forall ((i I)) (=> (= (itype i) Deq) (and (= (rval (D1e i)) (deqh i)) (= (loc (D1e i)) top) (= (field (D1e i)) Default) (= (etype (D1e i)) R) (= (elabel (D1e i)) Acq)))))
 
-(assert (forall ((i I)) (=> (and (= (itype i) Deq) (= (deqh i) NULL)) (and (= (retval i) EMPTY) (isBot (D2e i)) (isBot (D3e i)) (isBot (D4e i)) ) ) ))
+(assert (forall ((i I)) (=> (and (= (itype i) Deq) (= (deqh i) NULL)) (and (= (retval i) EMPTY) (isBot (D2e i)) (isBot (D3e i)) (isBot (D4e i))))))
 
-(assert (forall ((i I)) (=> (and (= (itype i) Deq) (not (= (deqh i) NULL))) (and (= (rval (D2e i)) (deqv i)) (= (stype (D2e i)) D2t) (= (loc (D2e i)) (deqh i)) (= (field (D2e i)) Val) (= (etype (D2e i)) R) (= (elabel (D2e i)) Rlx) (soE (D1e i) (D2e i)) ) ) ))
+(assert (forall ((i I)) (=> (and (= (itype i) Deq) (not (= (deqh i) NULL))) (and (= (rval (D2e i)) (deqv i)) (= (stype (D2e i)) D2t) (= (loc (D2e i)) (deqh i)) (= (field (D2e i)) Val) (= (etype (D2e i)) R) (= (elabel (D2e i)) Rlx)))))
 
-(assert (forall ((i I)) (=> (and (= (itype i) Deq) (not (= (deqh i) NULL))) (and (= (rval (D3e i)) (deqn i)) (= (stype (D3e i)) D3t) (= (loc (D3e i)) (deqh i)) (= (field (D3e i)) Next) (= (etype (D3e i)) R) (= (elabel (D3e i)) Rlx) (soE (D2e i) (D3e i)) ) ) ))
+(assert (forall ((i I)) (=> (and (= (itype i) Deq) (not (= (deqh i) NULL))) (and (= (rval (D3e i)) (deqn i)) (= (stype (D3e i)) D3t) (= (loc (D3e i)) (deqh i)) (= (field (D3e i)) Next) (= (etype (D3e i)) R) (= (elabel (D3e i)) Rlx)))))
 
-(assert (forall ((i I)) (=> (and (= (itype i) Deq) (not (= (deqh i) NULL))) (and (= (retval i) (deqv i)) (= (rval (D4e i)) (deqh i)) (= (wval (D4e i)) (deqn i)) (= (stype (D4e i)) D4t) (= (loc (D4e i)) head) (= (field (D4e i)) Default) (= (etype (D4e i)) U) (= (elabel (D4e i)) AcqRel) (soE (D3e i) (D4e i)) ) ) ))
+(assert (forall ((i I)) (=> (and (= (itype i) Deq) (not (= (deqh i) NULL))) (and (= (retval i) (deqv i)) (= (rval (D4e i)) (deqh i)) (= (wval (D4e i)) (deqn i)) (= (stype (D4e i)) D4t) (= (loc (D4e i)) head) (= (field (D4e i)) Default) (= (etype (D4e i)) U) (= (elabel (D4e i)) AcqRel)))))
 
-(assert (forall ((i I)) (=> (and (= (itype i) Deq) (not (= (deqh i) NULL))) (and (not (= (retval i) EMPTY)) (not (= (retval i) zero))) ) ) )
+(assert (forall ((i I)) (=> (and (= (itype i) Deq) (not (= (deqh i) NULL))) (and (not (= (retval i) EMPTY)) (not (= (retval i) zero))))))
 ```
 
 Our verification algorithm proceeds by checking every pair of locations that
@@ -304,13 +292,13 @@ void enq(int v) {
     
     if(next == NULL) {
       if(atomic_compare_exchange_strong(&(t->next), next, n, memory_order_acqrel))
-        atomic_compare_exchange_strong(tail, t, next, memory_order_acqrel);
+        atomic_compare_exchange_strong(tail, t, next, memory_order_acqrel); // LP, enq
       }
       break;
     }
 
     else { 
-      atomic_compare_exchange_strong(tail, t, next, memory_order_acqrel);
+      atomic_compare_exchange_strong(tail, t, next, memory_order_acqrel); // LP, enq
     }
   }
 }
@@ -322,16 +310,16 @@ int deq() {
     node* n = atomic_load_explicit(&(head->next), memory_order_relaxed);
 
     if (n == NULL) {
-      return NULL;
+      return NULL; // LP, deq
     }
 
     if (h == l) {
-      atomic_compare_exchange_strong(tail, t, n, memory_order_acqrel);
+      atomic_compare_exchange_strong(tail, t, n, memory_order_acqrel); // LP, enq
       continue;
     }
 
     int r = atomic_load_explicit(&(n->val), memory_order_relaxed);
-    if(atomic_compare_exchange_strong(head, h, n, memory_order_acqrel)) {
+    if(atomic_compare_exchange_strong(head, h, n, memory_order_acqrel)) { // LP, deq
       break;
     }
   }
@@ -340,8 +328,9 @@ int deq() {
 }
 ```
 
-As before, we present the robustness preserving transformation of the above
-code -
+The comments of the form `LP, deq` and `LP, enq` represent the linearization
+points. As before, we present the robustness preserving transformation of the
+above code -
 
 ```c
 void enq(int v) {
@@ -357,30 +346,26 @@ void enq(int v) {
       break;
     }
     else { 
-      atomic_compare_exchange_strong(tail, t, next, memory_order_acqrel);
+      bcas_explicit(tail, t, next, memory_order_acqrel);
     }
   }
 }
 
 int deq() {
-  while(true) {
-    node* h = atomic_load_explicit(head, memory_order_acquire);
-    node* t = atomic_load_explicit(tail, memory_order_acquire);
-    node* n = atomic_load_explicit(&(head->next), memory_order_relaxed);
+  node* h = atomic_load_explicit(head, memory_order_acquire);
+  node* t = atomic_load_explicit(tail, memory_order_acquire);
+  node* n = atomic_load_explicit(&(head->next), memory_order_relaxed);
 
-    if (n == NULL) {
-      return NULL;
-    }
-
-    if (h == l) {
-      atomic_compare_exchange_strong(tail, t, n, memory_order_acqrel);
-      continue;
-    }
-
-    int r = atomic_load_explicit(&(n->val), memory_order_relaxed);
-    bcas_explicit(head, h, n, memory_order_acqrel))
-    break;
+  if (n == NULL) {
+    return NULL;
   }
+
+  if (h == l) {
+    atomic_compare_exchange_strong(tail, t, n, memory_order_acqrel);
+  }
+
+  int r = atomic_load_explicit(&(n->val), memory_order_relaxed);
+  bcas_explicit(head, h, n, memory_order_acqrel))
   return r;
 }
 ```
@@ -388,60 +373,52 @@ int deq() {
 Next we present the encoding of the events - 
 
 ```smt
-(assert (forall ((i I)) (=> (and (= (itype i) Deq) (= (deqNext i) NULL) ) (and  (= (retval i) EMPTY) (isBot (D4e i)) (isBot (D5e i)) (isBot (D6e i)) ) ) ))
+(assert (forall ((i I)) (=> (= (itype i) Enq) (and (= (etype (E1e i)) W) (= (elabel (E1e i)) Rlx)  (= (loc (E1e i)) (newloc i)) (= (stype (E1e i)) E1t) (= (field (E1e i)) Val) (= (wval (E1e i)) (argval i))))))
 
-(assert (forall ((i I)) (=> (and (= (itype i) Deq) (= (deqFirst i) (deqLast i)) (not (= (deqNext i) NULL))  ) (and  (isR (D4e i)) (= (stype (D4e i)) D4t)  (= (loc (D5e i)) tail) (= (field (D5e i)) Default) (soE (D3e i) (D4e i)) ) ) ))
+(assert (forall ((i I)) (=> (= (itype i) Enq) (and (= (etype (E2e i)) R) (= (elabel (E2e i)) Acq) (= (loc (E2e i)) tail) (= (stype (E2e i)) E2t) (= (field (E2e i)) Default) (= (rval (E2e i)) (enqLast i))))))
 
-(assert (forall ((i I)) (=> (and (= (itype i) Deq) (not (= (deqNext i) NULL))  (= (deqFirst i) (deqLast i)) (= (rval (D4e i)) (deqLast i)) ) (and (= (etype (D4e i)) U) (= (wval (D4e i)) (deqNext i) ) ) ) ))
+(assert (forall ((i I)) (=> (= (itype i) Enq) (and (= (etype (E3e i)) R) (= (elabel (E3e i)) Rlx) (= (loc (E3e i)) (enqLast i)) (= (stype (E3e i)) E3t) (= (field (E3e i)) Next) (= (rval (E3e i)) (enqNext i))))))
 
-(assert (forall ((i I)) (=> (and (= (itype i) Deq) (not (= (deqNext i) NULL)) (= (deqFirst i) (deqLast i))  (not (= (rval (D4e i)) (deqLast i))) ) (= (etype (D4e i)) R)   ) ))
+(assert (forall ((i I)) (=> (and (= (itype i) Enq)  (= (enqNext i) NULL)) (and (= (loc (E4e i)) (enqLast i)) (= (elabel (E4e i)) Acqrel) (= (field (E4e i)) Next) (= (stype (E4e i)) E4t) (isBot (E6e i)) (= (rval (E4e i)) (enqNext i)) (= (etype (E4e i)) U) (= (wval (E4e i)) (newloc i))))))
 
-;(assert (forall ((i I)) (=> (and (= (itype i) Deq) (= (rval (D4e i)) (deqFirst i)) (not (= (deqFirst i) (deqLast i))) (= (deqNext i) NULL) ) (and  (isBot (D5e i)) (isBot (D6e i))(isBot (D7e i)) (= (retval i) EMPTY) (completed i) ) )))
+(assert (forall ((i I)) (=> (and (= (itype i) Enq)  (= (enqNext i) NULL)) (and (isR (E5e i)) (= (elabel (E5e i) Acq)) (= (stype (E5e i)) E5t) (= (loc (E5e i)) tail) (= (field (E5e i)) Default)))))
 
-(assert (forall ((i I)) (=> (and (= (itype i) Deq)  (not (= (deqNext i) NULL)) ) (and   (= (etype (D5e i)) R) (= (loc (D5e i)) (deqNext i)) (= (field (D5e i)) Val) (= (stype (D5e i)) D5t) (= (rval (D5e i)) (deqRetval i) ) (soE (D4e i) (D5e i)) ) )))
+(assert (forall ((i I)) (=> (and (= (itype i) Enq)  (= (enqNext i) NULL)  (= (rval (E5e i)) (enqLast i)) ) (and  (= (etype (E5e i)) U) (= (elabel (E5e i) AcqRel)) (= (wval (E5e i)) (newloc i))))))
 
-(assert (forall ((i I)) (=> (and (= (itype i) Deq)  (not (= (deqNext i) NULL)) ) (and   (= (loc (D6e i)) head) (= (field (D6e i)) Default) (= (stype (D6e i)) D6t) (= (rval (D6e i)) (deqFirst i) ) (= (wval (D6e i)) (deqNext i)) (= (etype (D6e i)) U)  (soE (D5e i) (D6e i)) (= (retval i) (deqRetval i)) ) )))
+(assert (forall ((i I)) (=> (and (= (itype i) Enq)  (= (enqNext i) NULL)  (not (= (rval (E5e i)) (enqLast i))))  (= (etype (E5e i)) R) (= (elabel (E5e i) Acq)))))
 
-(assert (forall ((i I)) (=> (= (itype i) Enq) (and (= (etype (E1e i)) W)  (= (loc (E1e i)) (newloc i)) (= (stype (E1e i)) E1t) (= (field (E1e i)) Val) (= (wval (E1e i)) (argval i)) ) ) ))
+(assert (forall ((i I)) (=> (and (= (itype i) Enq)  (not (= (enqNext i) NULL)) ) (and (isBot (E4e i)) (isBot (E5e i))  (= (loc (E6e i)) tail) (= (field (E6e i)) Default) (= (stype (E6e i)) E6t) (= (rval (E6e i)) (enqLast i)) (= (etype (E6e i)) U) (= (elabel (E6e i) AcqRel)) ((= (wval (E6e i)) (enqNext i)))))))
 
+(assert (forall ((i I)) (=> (= (itype i) Deq) (and (= (rval (D1e i)) (deqFirst i)) (= (elabel (D1e i) Acq)) (= (stype (D1e i)) D1t) (= (loc (D1e i)) head) (= (field (D1e i)) Default) (= (etype (D1e i)) R)))))
 
-(assert (forall ((i I)) (=> (= (itype i) Enq) (soE (E1e i) (E2e i)) ) ))
-(assert (forall ((i I)) (=> (= (itype i) Enq) (and (= (etype (E2e i)) R)  (= (loc (E2e i)) tail) (= (stype (E2e i)) E2t) (= (field (E2e i)) Default) (= (rval (E2e i)) (enqLast i)) ) ) ))
+(assert (forall ((i I)) (=> (= (itype i) Deq) (and (= (rval (D2e i)) (deqLast i)) (= (elabel (D2e i) Acq)) (= (stype (D2e i)) D2t) (= (loc (D2e i)) tail) (= (field (D2e i)) Default) (= (etype (D2e i)) R)))))
 
+(assert (forall ((i I)) (=> (= (itype i) Deq) (and (= (rval (D3e i)) (deqNext i)) (= (elabel (D3e i) Rlx)) (= (stype (D3e i)) D3t) (= (loc (D3e i)) (deqFirst i)) (= (field (D3e i)) Next) (= (etype (D3e i)) R)))))
 
-(assert (forall ((i I)) (=> (= (itype i) Enq) (soE (E2e i) (E3e i)) ) ))
-(assert (forall ((i I)) (=> (= (itype i) Enq) (and (= (etype (E3e i)) R)  (= (loc (E3e i)) (enqLast i)) (= (stype (E3e i)) E3t) (= (field (E3e i)) Next) (= (rval (E3e i)) (enqNext i)) ) ) ))
+(assert (forall ((i I)) (=> (and (= (itype i) Deq) (= (deqNext i) NULL) ) (and  (= (retval i) EMPTY) (isBot (D4e i)) (isBot (D5e i)) (isBot (D6e i))))))
 
+(assert (forall ((i I)) (=> (and (= (itype i) Deq) (= (deqFirst i) (deqLast i)) (not (= (deqNext i) NULL))) (and (isR (D4e i)) (= (stype (D4e i)) D4t) (= (loc (D5e i)) tail) (= (field (D5e i)) Default)))))
 
-(assert (forall ((i I)) (=> (= (itype i) Enq) (soE (E3e i) (E4e i)) ) ))
-;(assert (forall ((i I)) (=> (= (itype i) Enq) (and (= (etype (E4e i)) R)  (= (loc (E4e i)) tail) (= (stype (E4e i)) E4t) (= (field (E4e i)) Default)  ) ) ))
+(assert (forall ((i I)) (=> (and (= (itype i) Deq) (not (= (deqNext i) NULL))  (= (deqFirst i) (deqLast i)) (= (rval (D4e i)) (deqLast i))) (and (= (etype (D4e i)) U) (= (elabel (D4e i) AcqRel)) (= (wval (D4e i)) (deqNext i))))))
 
+(assert (forall ((i I)) (=> (and (= (itype i) Deq) (not (= (deqNext i) NULL)) (= (deqFirst i) (deqLast i)) (not (= (rval (D4e i)) (deqLast i)))) (= (etype (D4e i)) R) (= (elabel (D4e i) Acq)))))
 
-;(assert (forall ((i I)) (=> (= (itype i) Enq) (soE (E4e i) (E5e i)) ) ))
-(assert (forall ((i I)) (=> (and (= (itype i) Enq)  (= (enqNext i) NULL) ) (and  (= (loc (E4e i)) (enqLast i) ) (= (field (E4e i)) Next) (= (stype (E4e i)) E4t) (isBot (E6e i)) (= (rval (E4e i)) (enqNext i) ) (= (etype (E4e i)) U) (= (wval (E4e i)) (newloc i) )  ) ) ))
+(assert (forall ((i I)) (=> (and (= (itype i) Deq)  (not (= (deqNext i) NULL))) (and (= (etype (D5e i)) R) (= (loc (D5e i)) (deqNext i)) (= (field (D5e i)) Val) (= (stype (D5e i)) D5t) (= (rval (D5e i)) (deqRetval i) ) (soE (D4e i) (D5e i))))))
 
-(assert (forall ((i I)) (=> (and (= (itype i) Enq)  (= (enqNext i) NULL)  ) (and   (isR (E5e i)) (= (stype (E5e i)) E5t) (= (loc (E5e i)) tail ) (= (field (E5e i)) Default ) (soE (E4e i) (E5e i))  ) ) ))
-
-;(assert (forall ((i I)) (=> (and (= (itype i) Enq) (= (enqNext i) NULL) (not (= (rval (E5e i)) (enqNext i) )) ) (and  (= (etype (E5e i)) R) (isBot (E6e i) ) (not (completed i)) ) ) ))
-
-(assert (forall ((i I)) (=> (and (= (itype i) Enq)  (= (enqNext i) NULL)  (= (rval (E5e i)) (enqLast i)) ) (and  (= (etype (E5e i)) U) (= (wval (E5e i)) (newloc i) )   ) ) ))
-(assert (forall ((i I)) (=> (and (= (itype i) Enq)  (= (enqNext i) NULL)  (not (= (rval (E5e i)) (enqLast i))) )  (= (etype (E5e i)) R)     ) ))
-
-
-(assert (forall ((i I)) (=> (and (= (itype i) Enq)  (not (= (enqNext i) NULL)) ) (and (isBot (E4e i)) (isBot (E5e i))  (= (loc (E6e i)) tail) (= (field (E6e i)) Default) (= (stype (E6e i)) E6t ) (soE (E3e i) (E6e i)) (= (rval (E6e i)) (enqLast i) ) (= (etype (E6e i)) U) (= (wval (E6e i)) (enqNext i) ) ) ) ))
+(assert (forall ((i I)) (=> (and (= (itype i) Deq)  (not (= (deqNext i) NULL))) (and (= (loc (D6e i)) head) (= (field (D6e i)) Default) (= (stype (D6e i)) D6t) (= (rval (D6e i)) (deqFirst i) ) (= (wval (D6e i)) (deqNext i)) (= (etype (D6e i)) U) (= elabel (D6e i) AcqRel) (= (retval i) (deqRetval i))))))
 ```
 
 Followed by the encoding of the linearizability axioms -
 
 ```smt2
 ;Linearization Point Constraints
-;Needed for L=N.Next,L'=tail
 (declare-fun lp (I) E)
-(assert (forall ((i I)) (=> (= (itype i) Enq) (and (= (etype (lp i)) U) (= (loc (lp i)) tail) (= (field (lp i)) Default) (= (wval (lp i)) (newloc i)) (= (rval (lp i)) (loc (E4e i)))  ) )  ))
+(assert (forall ((i I)) (=> (= (itype i) Enq) (and (= (etype (lp i)) U) (= (loc (lp i)) tail) (= (field (lp i)) Default) (= (wval (lp i)) (newloc i)) (= (rval (lp i)) (loc (E4e i)))))))
 (assert (forall ((i I)) (=> (and (= (itype i) Enq) (= (enqNext i) NULL))  (hb (E4e i) (lp i)) )  ))
-;Needed for L=N.Next,L'=head,deq invocation returns empty
+
 ;LPs of matching enqueue and dequeue are in hb Order
 (assert (forall ((ie I) (id I)) (=> (matchm ie id) (and (= (enqNext ie) NULL) (not (= (deqNext id) NULL)) (hb (E4e ie) (D6e id)) )) ))
+
 ;Empty axiom
 (assert (forall ((id1 I) (ie I)) (exists ((id2 I))(=> (and (= (itype id1) Deq)  (= (retval id1) EMPTY) (= (itype ie) Enq) (= (enqNext ie) NULL) (hb (E4e ie) (D1e id1)) ) (and (= (itype id2) Deq) (matchm ie id2) (not (= (deqNext id2) NULL))  (hb (D6e id2) (D1e id1))  ) ))))
 ```
@@ -470,17 +447,13 @@ For this case, we have the following set of locations that we need to verify -
 We show the query for one such case -
 
 ```smt2
-(push)
- ; Check for L = Next, L'= Tail
- (assert (= (itype in1) Enq))
- (assert (= (enqNext in1) NULL))
- (assert (= (itype in2) Enq))
- (assert (= (itype in3) Enq ))
- (assert (= (enqNext in3) NULL))
- (assert (fr (E2e in2) (E5e in3)))
- (assert (not (hb (E4e in1) (E5e in3))))
- (check-sat)
-(pop)
+(assert (= (itype in1) Enq ))
+(assert (= (enqNext in1) NULL))
+(assert (= (itype in2) Enq ))
+(assert (= (itype in3) Enq ))
+(assert (= (enqNext in3) NULL))
+(assert (fr (E2e in2) (E5e in3)))
+(assert (not (hb (E4e in1) (E5e in3))))
 ```
 
 ## Detailed explanation of Non-blocking set
