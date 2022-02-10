@@ -298,7 +298,7 @@ void enq(int v) {
     }
 
     else { 
-      atomic_compare_exchange_strong(tail, t, next, memory_order_acqrel); // LP, enq
+      atomic_compare_exchange_strong(tail, t, next, memory_order_acqrel);
     }
   }
 }
@@ -329,8 +329,12 @@ int deq() {
 ```
 
 The comments of the form `LP, deq` and `LP, enq` represent the linearization
-points. As before, we present the robustness preserving transformation of the
-above code, with the memory events marked as comments in the code -
+points provided by the user. In this benchmark, note that enqueue calls which
+do not add a new node but just move tail forward (when it is lagging) have
+their linearization points at the update to tail. We consider these as
+additonal LP's. As before, we present the robustness preserving
+transformation of the above code, with the memory events marked as comments
+in the code -
 
 ```c
 void enq(int v) {
@@ -651,10 +655,9 @@ For this case, we have the following set of locations that we need to verify -
 We show the query for one such case -
 
 ```smt2
+; Add->Add, 
 (assert (= (itype in1) Add))
 (assert (= (itype in2) Add))
-(assert (= (itype in3) Rem))
-(assert (= (addNext in3) NULL))
-(assert (fr (E2e in2) (E5e in3)))
-(assert (not (hb (E4e in1) (E5e in3))))
+(assert (fr (E4e in1) (E2e in2)))
+(assert (not (hb (E4e in1) (E2e in2))))
 ```
