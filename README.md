@@ -630,17 +630,17 @@ Followed by the encoding of the linearizability axioms -
 
 For this case, we have the following set of locations that we need to verify -
 
-| Case | L    | L'   |
-|------|------|------|
-|   1  | Top  | Top  |
-|   2  | Top  | Val  |
-|   3  | Top  | Next |
-|   5  | Val  | Top  | 
-|   6  | Val  | Val  |
-|   7  | Val  | Next |
-|   10 | Next | Top  |
-|   11 | Next | Val  |
-|   12 | Next | Next |
+| Case | L     | L'    |
+|------|-------|-------|
+|   1  | Head  | Head  |
+|   2  | Head  | Val   |
+|   3  | Head  | Next  |
+|   5  | Val   | Head  | 
+|   6  | Val   | Val   |
+|   7  | Val   | Next  |
+|   10 | Next  | Head  |
+|   11 | Next  | Val   |
+|   12 | Next  | Next  |
 
 We show the query for one such case -
 
