@@ -594,23 +594,23 @@ Next we present the encoding of the events -
 
 (assert (forall ((i I)) (=> (and (= (itype i) Add)  (not (= (addNext i) NULL)) ) (and (isBot (E4e i)) (isBot (E5e i))  (= (loc (E6e i)) tail) (= (field (E6e i)) Default) (= (stype (E6e i)) E6t) (= (rval (E6e i)) (enqLast i)) (= (etype (E6e i)) U) (= (elabel (E6e i) AcqRel)) ((= (wval (E6e i)) (addNext i)))))))
 
-(assert (forall ((i I)) (=> (= (itype i) Rem) (and (= (rval (D1e i)) (deqFirst i)) (= (elabel (D1e i) Acq)) (= (stype (D1e i)) D1t) (= (loc (D1e i)) head) (= (field (D1e i)) Default) (= (etype (D1e i)) R)))))
+(assert (forall ((i I)) (=> (= (itype i) Rem) (and (= (rval (D1e i)) (remFirst i)) (= (elabel (D1e i) Acq)) (= (stype (D1e i)) D1t) (= (loc (D1e i)) head) (= (field (D1e i)) Default) (= (etype (D1e i)) R)))))
 
-(assert (forall ((i I)) (=> (= (itype i) Rem) (and (= (rval (D2e i)) (deqLast i)) (= (elabel (D2e i) Acq)) (= (stype (D2e i)) D2t) (= (loc (D2e i)) tail) (= (field (D2e i)) Default) (= (etype (D2e i)) R)))))
+(assert (forall ((i I)) (=> (= (itype i) Rem) (and (= (rval (D2e i)) (remLast i)) (= (elabel (D2e i) Acq)) (= (stype (D2e i)) D2t) (= (loc (D2e i)) tail) (= (field (D2e i)) Default) (= (etype (D2e i)) R)))))
 
-(assert (forall ((i I)) (=> (= (itype i) Rem) (and (= (rval (D3e i)) (remNext i)) (= (elabel (D3e i) Rlx)) (= (stype (D3e i)) D3t) (= (loc (D3e i)) (deqFirst i)) (= (field (D3e i)) Next) (= (etype (D3e i)) R)))))
+(assert (forall ((i I)) (=> (= (itype i) Rem) (and (= (rval (D3e i)) (remNext i)) (= (elabel (D3e i) Rlx)) (= (stype (D3e i)) D3t) (= (loc (D3e i)) (remFirst i)) (= (field (D3e i)) Next) (= (etype (D3e i)) R)))))
 
 (assert (forall ((i I)) (=> (and (= (itype i) Rem) (= (remNext i) NULL) ) (and  (= (retval i) EMPTY) (isBot (D4e i)) (isBot (D5e i)) (isBot (D6e i))))))
 
-(assert (forall ((i I)) (=> (and (= (itype i) Rem) (= (deqFirst i) (deqLast i)) (not (= (remNext i) NULL))) (and (isR (D4e i)) (= (stype (D4e i)) D4t) (= (loc (D5e i)) tail) (= (field (D5e i)) Default)))))
+(assert (forall ((i I)) (=> (and (= (itype i) Rem) (= (remFirst i) (remLast i)) (not (= (remNext i) NULL))) (and (isR (D4e i)) (= (stype (D4e i)) D4t) (= (loc (D5e i)) tail) (= (field (D5e i)) Default)))))
 
-(assert (forall ((i I)) (=> (and (= (itype i) Rem) (not (= (remNext i) NULL))  (= (deqFirst i) (deqLast i)) (= (rval (D4e i)) (deqLast i))) (and (= (etype (D4e i)) U) (= (elabel (D4e i) AcqRel)) (= (wval (D4e i)) (remNext i))))))
+(assert (forall ((i I)) (=> (and (= (itype i) Rem) (not (= (remNext i) NULL))  (= (remFirst i) (remLast i)) (= (rval (D4e i)) (remLast i))) (and (= (etype (D4e i)) U) (= (elabel (D4e i) AcqRel)) (= (wval (D4e i)) (remNext i))))))
 
-(assert (forall ((i I)) (=> (and (= (itype i) Rem) (not (= (remNext i) NULL)) (= (deqFirst i) (deqLast i)) (not (= (rval (D4e i)) (deqLast i)))) (= (etype (D4e i)) R) (= (elabel (D4e i) Acq)))))
+(assert (forall ((i I)) (=> (and (= (itype i) Rem) (not (= (remNext i) NULL)) (= (remFirst i) (remLast i)) (not (= (rval (D4e i)) (remLast i)))) (= (etype (D4e i)) R) (= (elabel (D4e i) Acq)))))
 
-(assert (forall ((i I)) (=> (and (= (itype i) Rem)  (not (= (remNext i) NULL))) (and (= (etype (D5e i)) R) (= (elabel (D5e i) Rlx)) (= (loc (D5e i)) (remNext i)) (= (field (D5e i)) Val) (= (stype (D5e i)) D5t) (= (rval (D5e i)) (deqRetval i))))))
+(assert (forall ((i I)) (=> (and (= (itype i) Rem)  (not (= (remNext i) NULL))) (and (= (etype (D5e i)) R) (= (elabel (D5e i) Rlx)) (= (loc (D5e i)) (remNext i)) (= (field (D5e i)) Val) (= (stype (D5e i)) D5t) (= (rval (D5e i)) (remRetval i))))))
 
-(assert (forall ((i I)) (=> (and (= (itype i) Rem)  (not (= (remNext i) NULL))) (and (= (loc (D6e i)) head) (= (field (D6e i)) Default) (= (stype (D6e i)) D6t) (= (rval (D6e i)) (deqFirst i) ) (= (wval (D6e i)) (remNext i)) (= (etype (D6e i)) U) (= elabel (D6e i) AcqRel) (= (retval i) (deqRetval i))))))
+(assert (forall ((i I)) (=> (and (= (itype i) Rem)  (not (= (remNext i) NULL))) (and (= (loc (D6e i)) head) (= (field (D6e i)) Default) (= (stype (D6e i)) D6t) (= (rval (D6e i)) (remFirst i) ) (= (wval (D6e i)) (remNext i)) (= (etype (D6e i)) U) (= elabel (D6e i) AcqRel) (= (retval i) (remRetval i))))))
 ```
 
 Followed by the encoding of the linearizability axioms -
