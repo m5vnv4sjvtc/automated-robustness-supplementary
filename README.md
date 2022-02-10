@@ -330,42 +330,42 @@ int deq() {
 
 The comments of the form `LP, deq` and `LP, enq` represent the linearization
 points. As before, we present the robustness preserving transformation of the
-above code -
+above code, with the memory events marked as comments in the code -
 
 ```c
 void enq(int v) {
   while(true) {
     node* n = malloc(sizeof(node));
-    atomic_store_explicit(&(n->val), v, memory_order_relaxed);
-    node* t = atomic_load_explicit(tail, memory_order_acquire);
-    node* next = atomic_load_explicit(&(tail->next), memory_order_acquire);
+    atomic_store_explicit(&(n->val), v, memory_order_relaxed);                // E1
+    node* t = atomic_load_explicit(tail, memory_order_acquire);               // E2
+    node* next = atomic_load_explicit(&(tail->next), memory_order_acquire);   // E3
     
     if(next == NULL) {
-      bcas_explicit(&(t->next), next, n, memory_order_acqrel))
-      atomic_compare_exchange_strong(tail, t, next, memory_order_acqrel);
+      bcas_explicit(&(t->next), next, n, memory_order_acqrel))                // E4
+      atomic_compare_exchange_strong(tail, t, next, memory_order_acqrel);     // E5
       break;
     }
     else { 
-      bcas_explicit(tail, t, next, memory_order_acqrel);
+      bcas_explicit(tail, t, next, memory_order_acqrel);                      // E6
     }
   }
 }
 
 int deq() {
-  node* h = atomic_load_explicit(head, memory_order_acquire);
-  node* t = atomic_load_explicit(tail, memory_order_acquire);
-  node* n = atomic_load_explicit(&(head->next), memory_order_relaxed);
+  node* h = atomic_load_explicit(head, memory_order_acquire);                 // D1
+  node* t = atomic_load_explicit(tail, memory_order_acquire);                 // D2
+  node* n = atomic_load_explicit(&(head->next), memory_order_relaxed);        // D3
 
   if (n == NULL) {
     return NULL;
   }
 
   if (h == l) {
-    atomic_compare_exchange_strong(tail, t, n, memory_order_acqrel);
+    atomic_compare_exchange_strong(tail, t, n, memory_order_acqrel);         // D4
   }
 
-  int r = atomic_load_explicit(&(n->val), memory_order_relaxed);
-  bcas_explicit(head, h, n, memory_order_acqrel))
+  int r = atomic_load_explicit(&(n->val), memory_order_relaxed);             // D5
+  bcas_explicit(head, h, n, memory_order_acqrel))                            // D6
   return r;
 }
 ```
@@ -403,7 +403,7 @@ Next we present the encoding of the events -
 
 (assert (forall ((i I)) (=> (and (= (itype i) Deq) (not (= (deqNext i) NULL)) (= (deqFirst i) (deqLast i)) (not (= (rval (D4e i)) (deqLast i)))) (= (etype (D4e i)) R) (= (elabel (D4e i) Acq)))))
 
-(assert (forall ((i I)) (=> (and (= (itype i) Deq)  (not (= (deqNext i) NULL))) (and (= (etype (D5e i)) R) (= (loc (D5e i)) (deqNext i)) (= (field (D5e i)) Val) (= (stype (D5e i)) D5t) (= (rval (D5e i)) (deqRetval i) ) (soE (D4e i) (D5e i))))))
+(assert (forall ((i I)) (=> (and (= (itype i) Deq)  (not (= (deqNext i) NULL))) (and (= (etype (D5e i)) R) (= (elabel (D5e i) Rlx)) (= (loc (D5e i)) (deqNext i)) (= (field (D5e i)) Val) (= (stype (D5e i)) D5t) (= (rval (D5e i)) (deqRetval i))))))
 
 (assert (forall ((i I)) (=> (and (= (itype i) Deq)  (not (= (deqNext i) NULL))) (and (= (loc (D6e i)) head) (= (field (D6e i)) Default) (= (stype (D6e i)) D6t) (= (rval (D6e i)) (deqFirst i) ) (= (wval (D6e i)) (deqNext i)) (= (etype (D6e i)) U) (= elabel (D6e i) AcqRel) (= (retval i) (deqRetval i))))))
 ```
